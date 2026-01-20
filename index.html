@@ -105,22 +105,22 @@
         .pos-bottom { flex-direction: column; text-align: center; }
         .pos-bottom .slide-image { width: 100%; height: 200px; margin-top: 20px; }
 
-        .slide-number {
-            position: absolute; top: -40px; left: 0;
-            font-family: 'Orbitron', sans-serif; font-size: 5rem;
-            font-weight: 900; color: rgba(0, 242, 255, 0.1); letter-spacing: -5px;
+.slide-number {
+            position: absolute; 
+            top: -20px; /* 위치를 조금 더 안쪽으로 조정 */
+            left: 20px; 
+            font-family: 'Orbitron', sans-serif; 
+            font-size: 6rem; /* 크기를 키워 더 강조 */
+            font-weight: 900; 
+            /* 투명도를 0.1에서 0.3~0.4 정도로 높여 가독성 확보 */
+            color: rgba(0, 242, 255, 0.3); 
+            letter-spacing: -5px;
+            z-index: -1; /* 텍스트 뒤로 배치하여 세련되게 연출 */
+            pointer-events: none;
+            user-select: none;
+            /* 약간의 광채 효과 추가 */
+            text-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
         }
-
-        h2 {
-            font-family: 'Orbitron', sans-serif; color: var(--accent-color);
-            text-transform: uppercase; letter-spacing: 5px; font-size: 1.5rem;
-            margin-bottom: 20px; text-shadow: 0 0 20px rgba(0, 242, 255, 0.5);
-        }
-
-        p { line-height: 1.8; font-size: 1.05rem; color: #aaa; }
-        .highlight { color: var(--accent-color); }
-        .warning-text { color: var(--accent-red); }
-
         /* 네비게이션 버튼 */
         .nav-btn {
             position: absolute; top: 50%; transform: translateY(-50%);
@@ -294,3 +294,4 @@
 
 </body>
 </html>
+
