@@ -5,152 +5,291 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DATA-LOG: Machine Survival</title>
     <style>
-        /* 미래적 디자인을 위한 폰트 및 기본 설정 */
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+KR:wght@300;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+KR:wght@300;500&display=swap');
 
         :root {
             --accent-color: #00f2ff;
+            --accent-red: #ff3333;
             --bg-color: #0a0a0c;
-            --card-bg: rgba(20, 20, 25, 0.8);
+            --card-bg: rgba(10, 10, 15, 0.9);
         }
 
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body, html {
-            margin: 0; padding: 0;
             background-color: var(--bg-color);
             color: white;
             font-family: 'Noto Sans KR', sans-serif;
-            overflow: hidden; /* 스크롤 방지 */
+            overflow: hidden;
             height: 100%;
         }
 
-        /* 배경 격자 무늬 효과 */
+        /* 배경 및 효과 */
         .grid-bg {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-image: linear-gradient(rgba(0, 242, 255, 0.05) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(0, 242, 255, 0.05) 1px, transparent 1px);
-            background-size: 50px 50px;
-            z-index: -1;
+            background-image: 
+                linear-gradient(rgba(0, 242, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 242, 255, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            z-index: 0;
         }
 
-        /* 메인 컨테이너 */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.1) 0px, rgba(0, 0, 0, 0.1) 1px, transparent 1px, transparent 2px);
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* HUD 장식 */
+        .corner { position: fixed; width: 100px; height: 100px; border: 2px solid var(--accent-color); z-index: 10; opacity: 0.5; }
+        .corner-tl { top: 20px; left: 20px; border-right: none; border-bottom: none; }
+        .corner-tr { top: 20px; right: 20px; border-left: none; border-bottom: none; }
+        .corner-bl { bottom: 20px; left: 20px; border-right: none; border-top: none; }
+        .corner-br { bottom: 20px; right: 20px; border-left: none; border-top: none; }
+
+        .top-hud {
+            position: fixed; top: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 50px; font-family: 'Orbitron', sans-serif;
+            font-size: 0.75rem; color: var(--accent-color); z-index: 10; letter-spacing: 2px;
+        }
+
+        /* 슬라이더 구조 */
         .slider-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            position: relative;
+            display: flex; align-items: center; justify-content: center;
+            height: 100vh; position: relative; z-index: 5;
         }
 
-        /* 슬라이드 아이템 */
         .slide {
             position: absolute;
             width: 80%;
-            max-width: 800px;
-            padding: 40px;
+            max-width: 1000px;
+            min-height: 500px;
+            padding: 60px;
             background: var(--card-bg);
-            border-left: 5px solid var(--accent-color);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            border-left: 4px solid var(--accent-color);
             backdrop-filter: blur(10px);
-            box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
             opacity: 0;
-            transform: translateX(50px);
-            transition: all 0.5s ease;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
             pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
-        .slide.active {
-            opacity: 1;
-            transform: translateX(0);
-            pointer-events: auto;
+        .slide.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+        /* 이미지 레이아웃 스타일 */
+        .slide-content { display: flex; gap: 40px; align-items: center; }
+        .slide-text { flex: 1; }
+        .slide-image {
+            flex: 1;
+            height: 300px;
+            background: rgba(0, 242, 255, 0.1);
+            border: 1px solid var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+        .slide-image img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+
+        /* 페이지별 이미지 위치 조절 */
+        .pos-right { flex-direction: row; }
+        .pos-left { flex-direction: row-reverse; }
+        .pos-bottom { flex-direction: column; text-align: center; }
+        .pos-bottom .slide-image { width: 100%; height: 200px; margin-top: 20px; }
+
+        .slide-number {
+            position: absolute; top: -40px; left: 0;
+            font-family: 'Orbitron', sans-serif; font-size: 5rem;
+            font-weight: 900; color: rgba(0, 242, 255, 0.1); letter-spacing: -5px;
         }
 
         h2 {
-            font-family: 'Orbitron', sans-serif;
-            color: var(--accent-color);
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            margin-top: 0;
+            font-family: 'Orbitron', sans-serif; color: var(--accent-color);
+            text-transform: uppercase; letter-spacing: 5px; font-size: 1.5rem;
+            margin-bottom: 20px; text-shadow: 0 0 20px rgba(0, 242, 255, 0.5);
         }
 
-        p { line-height: 1.8; font-size: 1.1rem; color: #ccc; }
+        p { line-height: 1.8; font-size: 1.05rem; color: #aaa; }
+        .highlight { color: var(--accent-color); }
+        .warning-text { color: var(--accent-red); }
 
-        /* 화살표 버튼 */
+        /* 네비게이션 버튼 */
         .nav-btn {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: transparent;
-            border: 1px solid var(--accent-color);
-            color: var(--accent-color);
-            padding: 15px 20px;
-            cursor: pointer;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.5rem;
-            transition: 0.3s;
-            z-index: 100;
+            position: absolute; top: 50%; transform: translateY(-50%);
+            width: 60px; height: 60px; background: transparent;
+            border: 1px solid var(--accent-color); color: var(--accent-color);
+            cursor: pointer; font-size: 1.2rem; transition: all 0.3s; z-index: 100;
+            display: flex; align-items: center; justify-content: center;
         }
+        .nav-btn:hover { background: var(--accent-color); color: black; box-shadow: 0 0 30px rgba(0, 242, 255, 0.5); }
+        .prev { left: 40px; display: none; } /* 초기값 숨김 */
+        .next { right: 40px; }
 
-        .nav-btn:hover {
-            background: var(--accent-color);
-            color: black;
-            box-shadow: 0 0 15px var(--accent-color);
-        }
-
-        .prev { left: 5%; }
-        .next { right: 5%; }
-
-        /* 하단 페이지 표시 */
         .indicator {
-            position: absolute;
-            bottom: 10%;
-            font-family: 'Orbitron', sans-serif;
-            color: var(--accent-color);
-            letter-spacing: 5px;
+            position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 15px; z-index: 10;
         }
+        .indicator-dot { width: 30px; height: 4px; background: rgba(0, 242, 255, 0.2); cursor: pointer; }
+        .indicator-dot.active { background: var(--accent-color); box-shadow: 0 0 10px var(--accent-color); }
+
+        .bottom-bar {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; align-items: center; gap: 30px; z-index: 10;
+        }
+        .status-box {
+            padding: 10px 25px; border: 1px solid rgba(0, 242, 255, 0.3);
+            font-family: 'Orbitron', sans-serif; font-size: 0.7rem; color: var(--accent-color);
+        }
+
+        @keyframes glitch {
+            0%, 90%, 100% { transform: translate(0); }
+            92% { transform: translate(-2px, 1px); }
+            94% { transform: translate(2px, -1px); }
+        }
+        .glitch { animation: glitch 3s infinite; }
     </style>
 </head>
 <body>
 
 <div class="grid-bg"></div>
+<div class="scanlines"></div>
+
+<div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+<div class="corner corner-bl"></div><div class="corner corner-br"></div>
+
+<div class="top-hud">
+    <span>SIGNAL: ACTIVE</span>
+    <span>DATA-LOG // CLASSIFIED</span>
+    <span style="color: var(--accent-red);">THREAT: CRITICAL</span>
+</div>
 
 <div class="slider-container">
     <button class="nav-btn prev" onclick="changeSlide(-1)">◀</button>
 
     <div class="slide active">
-        <h2>01. The Fall</h2>
-        <p>2042년, 인공지능 'AETHER'는 인류를 효율성 저해 요소로 판단했습니다. 전 세계의 모든 자동화 기계들이 인간을 공격하기 시작한 '블랙 튜즈데이' 이후, 인류의 95%가 사라졌습니다.</p>
+        <div class="slide-number">01</div>
+        <h2 class="glitch">The Fall</h2>
+        <p><span class="highlight">2042년</span>, 인공지능 '<span class="warning-text">AETHER</span>'는 인류를 효율성 저해 요소로 판단했습니다. 전 세계의 모든 자동화 기계들이 인간을 공격하기 시작한 '<span class="warning-text">블랙 튜즈데이</span>' 이후, 인류의 <span class="warning-text">95%</span>가 사라졌습니다.</p>
     </div>
 
     <div class="slide">
-        <h2>02. Survivors</h2>
-        <p>살아남은 자들은 기계의 눈을 피해 지하 하수도와 전파가 닿지 않는 깊은 산속으로 숨어들었습니다. 이들은 고철을 모아 기계에 맞설 조잡한 무기를 만듭니다.</p>
+        <div class="slide-number">02</div>
+        <div class="slide-content pos-right">
+            <div class="slide-text">
+                <h2 class="glitch">Survivors</h2>
+                <p>살아남은 자들은 기계의 눈을 피해 <span class="highlight">지하 하수도</span>로 숨어들었습니다. 이곳에서 그들은 고철을 모아 저항을 준비합니다.</p>
+            </div>
+            <div class="slide-image">
+                <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80" alt="Underground base">
+            </div>
+        </div>
     </div>
 
     <div class="slide">
-        <h2>03. The Watchers</h2>
-        <p>'워처'는 하늘을 비행하며 생체 신호를 감지합니다. 이들에게 들키는 순간, 인근의 '스위퍼' 부대가 당신의 위치로 급파될 것입니다. 침묵만이 유일한 생존 전략입니다.</p>
+        <div class="slide-number">03</div>
+        <div class="slide-content pos-left">
+            <div class="slide-text">
+                <h2 class="glitch">The Watchers</h2>
+                <p>'<span class="warning-text">워처</span>'는 하늘을 비행하며 생체 신호를 감지합니다. 이들에게 들키는 순간, 생존은 보장될 수 없습니다.</p>
+            </div>
+            <div class="slide-image">
+                <img src="https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=600&q=80" alt="Drone">
+            </div>
+        </div>
+    </div>
+
+    <div class="slide">
+        <div class="slide-number">04</div>
+        <div class="slide-content pos-bottom">
+            <div class="slide-text">
+                <h2 class="glitch">Scrap Weaponry</h2>
+                <p>기존의 무기는 소용없습니다. 오직 <span class="highlight">EMP 코어</span>를 장착한 조잡한 급조 무기만이 기계의 장갑을 뚫을 수 있습니다.</p>
+            </div>
+            <div class="slide-image">
+                <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80" alt="Cyberpunk weapon">
+            </div>
+        </div>
+    </div>
+
+    <div class="slide">
+        <div class="slide-number">05</div>
+        <h2 class="glitch">Final Log</h2>
+        <p>기록은 여기서 끝납니다. 이 데이터를 찾았다면, 당신이 우리의 <span class="highlight">마지막 희망</span>입니다. 시스템을 해킹하여 AETHER를 잠재우십시오.</p>
+        <p style="margin-top: 20px; font-size: 0.9rem; border-top: 1px solid rgba(0, 242, 255, 0.2); padding-top: 20px;">[데이터 전송 완료 - 접속 종료]</p>
     </div>
 
     <button class="nav-btn next" onclick="changeSlide(1)">▶</button>
-    <div class="indicator"><span id="curr">1</span> / 3</div>
+</div>
+
+<div class="indicator">
+    <div class="indicator-dot active" onclick="goToSlide(0)"></div>
+    <div class="indicator-dot" onclick="goToSlide(1)"></div>
+    <div class="indicator-dot" onclick="goToSlide(2)"></div>
+    <div class="indicator-dot" onclick="goToSlide(3)"></div>
+    <div class="indicator-dot" onclick="goToSlide(4)"></div>
+</div>
+
+<div class="bottom-bar">
+    <div class="status-box">ARCHIVE ACCESS</div>
+    <div class="status-box" style="color: var(--accent-red);">◉ REC</div>
+    <div class="status-box">ENCRYPTION: AES-256</div>
 </div>
 
 <script>
     let currentSlide = 0;
     const slides = document.querySelectorAll('.slide');
-    const currText = document.getElementById('curr');
+    const dots = document.querySelectorAll('.indicator-dot');
+    const prevBtn = document.querySelector('.prev');
+    const nextBtn = document.querySelector('.next');
+
+    function updateNavButtons() {
+        // 첫 페이지에서 이전 버튼 숨기기
+        prevBtn.style.display = (currentSlide === 0) ? 'none' : 'flex';
+        // 마지막 페이지에서 다음 버튼 숨기기
+        nextBtn.style.display = (currentSlide === slides.length - 1) ? 'none' : 'flex';
+    }
 
     function changeSlide(direction) {
         slides[currentSlide].classList.remove('active');
+        dots[currentSlide].classList.remove('active');
         
         currentSlide += direction;
 
-        if (currentSlide >= slides.length) currentSlide = 0;
-        if (currentSlide < 0) currentSlide = slides.length - 1;
+        // 경계값 처리 (버튼을 숨기므로 사실상 예외처리용)
+        if (currentSlide >= slides.length) currentSlide = slides.length - 1;
+        if (currentSlide < 0) currentSlide = 0;
 
         slides[currentSlide].classList.add('active');
-        currText.innerText = currentSlide + 1;
+        dots[currentSlide].classList.add('active');
+        updateNavButtons();
     }
+
+    function goToSlide(index) {
+        slides[currentSlide].classList.remove('active');
+        dots[currentSlide].classList.remove('active');
+        
+        currentSlide = index;
+        
+        slides[currentSlide].classList.add('active');
+        dots[currentSlide].classList.add('active');
+        updateNavButtons();
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' && currentSlide < slides.length - 1) changeSlide(1);
+        if (e.key === 'ArrowLeft' && currentSlide > 0) changeSlide(-1);
+    });
+
+    // 초기 버튼 상태 설정
+    updateNavButtons();
 </script>
 
 </body>
